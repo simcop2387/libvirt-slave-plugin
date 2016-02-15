@@ -2,7 +2,6 @@ package hudson.plugins.libvirt.lib;
 
 import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials;
 import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
-import hudson.plugins.libvirt.lib.jlibvirt.JLibVirtConnectImpl;
 import hudson.plugins.libvirt.lib.libvirt.LibVirtConnectImpl;
 
 /**
@@ -10,7 +9,6 @@ import hudson.plugins.libvirt.lib.libvirt.LibVirtConnectImpl;
  */
 public class ConnectionBuilder {
 
-    private boolean useNativeJava = false;
     private String uri;
     private boolean readOnly = false;
 
@@ -64,32 +62,10 @@ public class ConnectionBuilder {
         return this;
     }
 
-    public ConnectionBuilder useNativeJava(boolean b) {
-        this.useNativeJava = b;
-        return this;
-    }
-
     public IConnect build() throws VirtException {
-
-        if( useNativeJava ) {
-
-            if( uri == null )
-                uri = constructNativeHypervisorURI();
-
-
-            StandardUsernamePasswordCredentials standardUsernamePasswordCredentials = (StandardUsernamePasswordCredentials) credentials;
-            return new JLibVirtConnectImpl(hypervisorHost,
-                    hypervisorPort,
-                    credentials.getUsername(),
-                    standardUsernamePasswordCredentials.getPassword().getPlainText(),
-                    uri, readOnly);
-        }
-        else
-        {
-            if( uri == null )
-                uri = constructHypervisorURI();
-            return new LibVirtConnectImpl(uri, readOnly);
-        }
+        if( uri == null )
+            uri = constructHypervisorURI();
+        return new LibVirtConnectImpl(uri, readOnly);
     }
 
     public String constructHypervisorURI () {
@@ -97,12 +73,4 @@ public class ConnectionBuilder {
         final String separator = (hypervisorSysUrl.contains("?")) ? "&" : "?";
         return hypervisorType.toLowerCase() + "+" + protocol + this.credentials.getUsername() + "@" + hypervisorHost + ":" + hypervisorPort + "/" + hypervisorSysUrl + separator + "no_tty=1";
     }
-
-    public String constructNativeHypervisorURI () {
-        // Fixing JENKINS-14617
-        final String separator = (hypervisorSysUrl.contains("?")) ? "&" : "?";
-        return hypervisorType.toLowerCase() + ":///" + hypervisorSysUrl + separator + "no_tty=1";
-    }
-
-
 }
