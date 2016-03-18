@@ -432,9 +432,6 @@ public class Hypervisor extends Cloud {
                 if (hypervisorType == null) {
                     return FormValidation.error("Hypervisor type is not specified!");
                 }
-                if (username == null) {
-                    return FormValidation.error("Username is not specified!");
-                }
 
                 ConnectionBuilder builder = ConnectionBuilder.newBuilder()
                         .hypervisorType(hypervisorType)
@@ -496,13 +493,17 @@ public class Hypervisor extends Cloud {
             return username;
         }
 
-        public List<String> getHypervisorTypes() {
-            List<String> types = new ArrayList<String>();
-            types.add("QEMU");
-            types.add("XEN");
-            types.add("LXC");
-            types.add("BHYVE");
-            return types;
-        }
+	public List<String> getHypervisorTypes() {
+	    List<String> types = new ArrayList<String>();
+	    types.add("QEMU");
+	    types.add("QEMU+SSH");
+	    types.add("XEN");
+	    types.add("XEN+SSH");
+	    types.add("LXC");
+	    types.add("LXC+SSH");
+	    types.add("BHYVE");
+	    types.add("BHYVE+SSH");
+	    return types;
+	}
     }
 }
