@@ -2,7 +2,6 @@ package hudson.plugins.libvirt.lib;
 
 import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials;
 import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
-import hudson.plugins.libvirt.lib.jlibvirt.JLibVirtConnectImpl;
 import hudson.plugins.libvirt.lib.libvirt.LibVirtConnectImpl;
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
@@ -18,7 +17,6 @@ public class ConnectionBuilder {
     private boolean readOnly = false;
 
     private String hypervisorType;
-    private String userName;
     private String hypervisorHost;
     private int    hypervisorPort = 22;
     private String hypervisorSysUrl;
@@ -29,11 +27,6 @@ public class ConnectionBuilder {
 
     public ConnectionBuilder hypervisorType(String hypervisorType) {
         this.hypervisorType = hypervisorType;
-        return this;
-    }
-
-    public ConnectionBuilder userName(String userName) {
-        this.userName = userName;
         return this;
     }
 
@@ -67,52 +60,16 @@ public class ConnectionBuilder {
         return this;
     }
 
-    public ConnectionBuilder useNativeJava(boolean b) {
-        this.useNativeJava = b;
-        return this;
-    }
-
     public IConnect build() throws VirtException {
-
-        if( useNativeJava ) {
-
-            if( uri == null )
-                uri = constructNativeHypervisorURI();
-
-
-            StandardUsernamePasswordCredentials standardUsernamePasswordCredentials = (StandardUsernamePasswordCredentials) credentials;
-            return new JLibVirtConnectImpl(hypervisorHost,
-                    hypervisorPort,
-                    credentials.getUsername(),
-                    standardUsernamePasswordCredentials.getPassword().getPlainText(),
-                    uri, readOnly);
-        }
-        else
-        {
-            if( uri == null )
-                uri = constructHypervisorURI();
-            return new LibVirtConnectImpl(uri, readOnly);
-        }
+        if( uri == null )
+            uri = constructHypervisorURI();
+        return new LibVirtConnectImpl(uri, readOnly);
     }
 
     public String constructHypervisorURI () {
-	String Url = hypervisorType.toLowerCase() + "://";
-	// Fixing JENKINS-14617
-	if (userName != null && !userName.isEmpty())
-	    Url += userName + "@";
-
-	Url += hypervisorHost;
-	if (hypervisorPort != 0)
-	    Url += ":" + hypervisorPort;
-
-	if (hypervisorSysUrl != null && !hypervisorSysUrl.isEmpty())
-	    Url += "/" + hypervisorSysUrl;
-
-	LogRecord rec = new LogRecord(Level.INFO, "hypervisor: {0}");
-	rec.setParameters(new Object[]{Url});
-	LOGGER.log(rec);
-
-	return Url;
+        // Fixing JENKINS-14617
+        final String separator = (hypervisorSysUrl.contains("?")) ? "&" : "?";
+        return hypervisorType.toLowerCase() + "+ssh://" + this.credentials.getUsername() + "@" + hypervisorHost + ":" + hypervisorPort + "/" + hypervisorSysUrl + separator + "no_tty=1";
     }
 
     public String constructNativeHypervisorURI () {
@@ -126,5 +83,4 @@ public class ConnectionBuilder {
 
 	return Url;
     }
-
 }
